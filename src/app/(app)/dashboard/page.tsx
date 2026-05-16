@@ -7,6 +7,7 @@ import {
 } from '@/lib/forever-fund/math';
 import { AddExpenseForm } from './_components/add-expense-form';
 import { ExpenseRow } from './_components/expense-row';
+import { KidsHouseFundSummary } from './_components/kids-house-fund-summary';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -39,19 +40,22 @@ export default async function DashboardPage() {
         </h1>
       </div>
 
-      {/* Forever Number Summary */}
-      <div className="rounded-2xl p-8 md:p-10 mb-10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-gold/30">
-        <p className="text-xs font-bold tracking-widest uppercase text-gold mb-3">
-          Your Forever Number
-        </p>
-        <div className="font-serif text-5xl md:text-7xl font-bold text-gold-light mb-3 tabular-nums">
-          {formatCurrency(total)}
+      {/* Two-column summary: Forever Number + Kids House Fund */}
+      <div className="grid gap-4 md:grid-cols-2 mb-10">
+        <div className="rounded-2xl p-8 md:p-10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-gold/30">
+          <p className="text-xs font-bold tracking-widest uppercase text-gold mb-3">
+            Your Forever Number
+          </p>
+          <div className="font-serif text-4xl md:text-5xl font-bold text-gold-light mb-3 tabular-nums">
+            {formatCurrency(total)}
+          </div>
+          <p className="text-sm text-slate-muted">
+            {list.length === 0
+              ? 'Add your first recurring expense to start building your Forever Number.'
+              : `What you'd need invested to cover ${formatCurrency(annual)}/yr forever, never touching principal.`}
+          </p>
         </div>
-        <p className="text-sm md:text-base text-slate-muted max-w-2xl">
-          {list.length === 0
-            ? "Add your first recurring expense to start building your Forever Number."
-            : `What you'd need invested to cover ${formatCurrency(annual)} of recurring expenses per year — forever, without ever touching the principal.`}
-        </p>
+        <KidsHouseFundSummary />
       </div>
 
       {/* Add Expense */}
