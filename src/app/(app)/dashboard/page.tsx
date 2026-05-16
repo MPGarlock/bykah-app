@@ -1,4 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
+import type { Expense } from '@/lib/forever-fund/types';
+import {
+  totalForeverNumber,
+  totalAnnualSpend,
+  formatCurrency,
+} from '@/lib/forever-fund/math';
+import { AddExpenseForm } from './_components/add-expense-form';
+import { ExpenseRow } from './_components/expense-row';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -6,62 +14,86 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { data: expenses } = await supabase
+    .from('expenses')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  const list: Expense[] = expenses ?? [];
+  const total = totalForeverNumber(list);
+  const annual = totalAnnualSpend(list);
   const displayName =
     (user?.user_metadata?.full_name as string | undefined) ??
     user?.email?.split('@')[0] ??
     'there';
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
-      <div className="mb-12">
-        <p className="text-xs font-bold tracking-widest uppercase text-gold mb-3">
-          Welcome
+    <div className="max-w-5xl mx-auto px-6 py-12">
+      {/* Greeting */}
+      <div className="mb-8">
+        <p className="text-xs font-bold tracking-widest uppercase text-gold mb-2">
+          Welcome back
         </p>
-        <h1 className="font-serif text-5xl font-bold text-gold-light mb-4">
+        <h1 className="font-serif text-3xl md:text-4xl font-bold text-gold-light">
           Hey, {displayName}.
         </h1>
-        <p className="text-lg text-slate-muted max-w-xl">
-          You&apos;re in. The app foundation is live — auth works, your account
-          exists, and we&apos;re ready to start building the modules.
-        </p>
       </div>
 
-      <div className="rounded-2xl p-8 bg-white/[0.03] border border-white/[0.08]">
+      {/* Forever Number Summary */}
+      <div className="rounded-2xl p-8 md:p-10 mb-10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-gold/30">
         <p className="text-xs font-bold tracking-widest uppercase text-gold mb-3">
-          Coming Next
+          Your Forever Number
         </p>
-        <h2 className="font-serif text-3xl font-bold text-gold-light mb-4">
-          The Forever Fund Module
-        </h2>
-        <p className="text-base text-slate-muted mb-6 max-w-2xl">
-          Track every recurring expense in your life. See how much you&apos;d
-          need invested to cover each one — forever, without ever touching the
-          principal. The signature concept from the show, automated.
-        </p>
-        <p className="text-sm text-slate-subtle">
-          Phase 2 — building soon. You&apos;ll be one of the first to use it.
+        <div className="font-serif text-5xl md:text-7xl font-bold text-gold-light mb-3 tabular-nums">
+          {formatCurrency(total)}
+        </div>
+        <p className="text-sm md:text-base text-slate-muted max-w-2xl">
+          {list.length === 0
+            ? "Add your first recurring expense to start building your Forever Number."
+            : `What you'd need invested to cover ${formatCurrency(annual)} of recurring expenses per year — forever, without ever touching the principal.`}
         </p>
       </div>
 
-      <div className="mt-12 grid sm:grid-cols-3 gap-4">
-        {[
-          { label: 'Budget Tracker', when: 'Phase 3' },
-          { label: 'Investment Tracker', when: 'Phase 3' },
-          { label: 'Kids House Fund', when: 'Phase 3' },
-        ].map((m) => (
-          <div
-            key={m.label}
-            className="rounded-xl p-5 bg-white/[0.02] border border-white/[0.06]"
-          >
-            <div className="text-xs uppercase tracking-wider text-slate-subtle mb-2">
-              {m.when}
-            </div>
-            <div className="font-serif text-lg font-bold text-slate-text">
-              {m.label}
-            </div>
-          </div>
-        ))}
+      {/* Add Expense */}
+      <div className="mb-10">
+        <h2 className="font-serif text-xl font-bold text-gold-light mb-4">
+          Add a recurring expense
+        </h2>
+        <AddExpenseForm />
       </div>
+
+      {/* Expense List */}
+      <div>
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="font-serif text-xl font-bold text-gold-light">
+            Your expenses
+          </h2>
+          <p className="text-xs uppercase tracking-widest text-slate-subtle">
+            {list.length} {list.length === 1 ? 'item' : 'items'}
+          </p>
+        </div>
+
+        {list.length === 0 ? (
+          <div className="rounded-xl p-10 text-center bg-white/[0.02] border border-white/[0.06]">
+            <p className="text-slate-muted">
+              No expenses yet. Try adding one like &ldquo;Phone bill — $50/mo&rdquo;
+              to see how your Forever Number works.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {list.map((expense) => (
+              <ExpenseRow key={expense.id} expense={expense} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Footer note */}
+      <p className="mt-12 text-xs text-slate-subtle text-center max-w-2xl mx-auto">
+        Educational tool only. Not financial advice. Withdrawal rates and
+        market returns are not guaranteed.
+      </p>
     </div>
   );
 }
