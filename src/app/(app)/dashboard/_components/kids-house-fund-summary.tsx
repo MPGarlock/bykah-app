@@ -2,6 +2,9 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { formatCurrency } from '@/lib/forever-fund/math';
 
+type FundSummaryRow = { id: string; target_amount: number };
+type ContributionSummaryRow = { amount: number };
+
 /**
  * Server component summary card for /dashboard.
  * Pulls totals across all of a user's funds + contributions and renders a
@@ -15,8 +18,9 @@ export async function KidsHouseFundSummary() {
     supabase.from('kids_house_contributions').select('amount'),
   ]);
 
-  const fundList = funds ?? [];
-  const contributionList = contributions ?? [];
+  const fundList: FundSummaryRow[] = (funds as FundSummaryRow[] | null) ?? [];
+  const contributionList: ContributionSummaryRow[] =
+    (contributions as ContributionSummaryRow[] | null) ?? [];
 
   const totalBalance = contributionList.reduce(
     (sum, c) => sum + Number(c.amount),
