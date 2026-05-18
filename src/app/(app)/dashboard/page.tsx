@@ -8,6 +8,7 @@ import {
 import { AddExpenseForm } from './_components/add-expense-form';
 import { ExpenseRow } from './_components/expense-row';
 import { KidsHouseFundSummary } from './_components/kids-house-fund-summary';
+import { InvestmentTrackerSummary } from './_components/investment-tracker-summary';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -40,22 +41,23 @@ export default async function DashboardPage() {
         </h1>
       </div>
 
-      {/* Two-column summary: Forever Number + Kids House Fund */}
-      <div className="grid gap-4 md:grid-cols-2 mb-10">
+      {/* Three-column summary: Forever Number + Kids House Fund + Investment Tracker */}
+      <div className="grid gap-4 md:grid-cols-3 mb-10">
         <div className="rounded-2xl p-8 md:p-10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-gold/30">
           <p className="text-xs font-bold tracking-widest uppercase text-gold mb-3">
             Your Forever Number
           </p>
-          <div className="font-serif text-4xl md:text-5xl font-bold text-gold-light mb-3 tabular-nums">
+          <div className="font-serif text-3xl md:text-4xl font-bold text-gold-light mb-3 tabular-nums">
             {formatCurrency(total)}
           </div>
           <p className="text-sm text-slate-muted">
             {list.length === 0
               ? 'Add your first recurring expense to start building your Forever Number.'
-              : `What you'd need invested to cover ${formatCurrency(annual)}/yr forever, never touching principal.`}
+              : `What you'd need invested to cover ${formatCurrency(annual)}/yr forever.`}
           </p>
         </div>
         <KidsHouseFundSummary />
+        <InvestmentTrackerSummary />
       </div>
 
       {/* Add Expense */}
