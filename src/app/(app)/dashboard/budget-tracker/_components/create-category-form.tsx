@@ -2,13 +2,22 @@
 
 import { useState, useTransition } from 'react';
 import { createCategory } from '@/lib/budget-tracker/actions';
-import { CATEGORY_NAME_MAX } from '@/lib/budget-tracker/types';
+import {
+  CATEGORY_NAME_MAX,
+  BUCKETS,
+  type Bucket,
+} from '@/lib/budget-tracker/types';
 
-export function CreateCategoryForm() {
+export function CreateCategoryForm({
+  defaultBucket = 'needs',
+}: {
+  defaultBucket?: Bucket;
+}) {
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState('');
   const [name, setName] = useState('');
   const [budget, setBudget] = useState('');
+  const [bucket, setBucket] = useState<Bucket>(defaultBucket);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -23,6 +32,7 @@ export function CreateCategoryForm() {
       }
       setName('');
       setBudget('');
+      setBucket(defaultBucket);
     });
   }
 
@@ -32,7 +42,7 @@ export function CreateCategoryForm() {
       className="rounded-xl p-5 md:p-6 bg-white/[0.03] border border-white/[0.08]"
     >
       <div className="grid gap-4 md:grid-cols-12">
-        <div className="md:col-span-7">
+        <div className="md:col-span-5">
           <label className="form-label">Category name</label>
           <input
             type="text"
@@ -46,7 +56,23 @@ export function CreateCategoryForm() {
             disabled={isPending}
           />
         </div>
-        <div className="md:col-span-5">
+        <div className="md:col-span-4">
+          <label className="form-label">Bucket</label>
+          <select
+            name="bucket"
+            value={bucket}
+            onChange={(e) => setBucket(e.target.value as Bucket)}
+            className="form-input"
+            disabled={isPending}
+          >
+            {BUCKETS.map((b) => (
+              <option key={b.value} value={b.value}>
+                {b.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="md:col-span-3">
           <label className="form-label">Monthly budget ($)</label>
           <input
             type="number"

@@ -1,5 +1,6 @@
 /**
- * BYKAH Budget Tracker — Server Actions for category + transaction CRUD.
+ * BYKAH Budget Tracker — Server Actions for category + transaction CRUD
+ * and the per-user 50/30/20 plan settings.
  *
  * All actions:
  *  - Require an authenticated user (Supabase RLS also enforces this).
@@ -18,9 +19,14 @@ import {
   BUDGET_MAX,
   AMOUNT_MIN,
   AMOUNT_MAX,
+  INCOME_MAX,
+  type Bucket,
 } from './types';
+import { percentagesAreValid } from './math';
 
 type ActionResult = { ok: true } | { ok: false; error: string };
+
+const VALID_BUCKETS: Bucket[] = ['needs', 'wants', 'investments'];
 
 function revalidateAll() {
   revalidatePath('/dashboard/budget-tracker');
@@ -30,11 +36,12 @@ function revalidateAll() {
 function parseCategoryFields(formData: FormData):
   | {
       ok: true;
-      values: { name: string; monthly_budget: number };
+      values: { name: string; monthly_budget: number; bucket: Bucket };
     }
   | { ok: false; error: string } {
   const name = String(formData.get('name') ?? '').trim();
   const budgetRaw = String(formData.get('monthly_budget') ?? '').trim();
+  const bucketRaw = String(formData.get('bucket') ?? 'needs').trim();
 
   if (!name) return { ok: false, error: 'Category name is required.' };
   if (name.length > CATEGORY_NAME_MAX) {
@@ -55,11 +62,16 @@ function parseCategoryFields(formData: FormData):
     return { ok: false, error: 'Budget is unrealistically large.' };
   }
 
+  const bucket = VALID_BUCKETS.includes(bucketRaw as Bucket)
+    ? (bucketRaw as Bucket)
+    : 'needs';
+
   return {
     ok: true,
     values: {
       name,
       monthly_budget: Math.round(monthly_budget * 100) / 100,
+      bucket,
     },
   };
 }
@@ -279,6 +291,62 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
       ok: false,
       error: `Could not delete transaction: ${error.message}`,
     };
+  }
+
+  revalidateAll();
+  return { ok: true };
+}
+
+/**
+ * Upsert the per-user 50/30/20 plan: post-tax monthly income + the three
+ * percentages (which must sum to 100).
+ */
+export async function updateBudgetSettings(
+  formData: FormData,
+): Promise<ActionResult> {
+  const incomeRaw = String(formData.get('monthly_income') ?? '').trim();
+  const needsRaw = String(formData.get('needs_pct') ?? '').trim();
+  const wantsRaw = String(formData.get('wants_pct') ?? '').trim();
+  const investmentsRaw = String(formData.get('investments_pct') ?? '').trim();
+
+  const monthly_income = Number(incomeRaw);
+  if (!Number.isFinite(monthly_income) || monthly_income < 0) {
+    return { ok: false, error: 'Income must be zero or a positive number.' };
+  }
+  if (monthly_income > INCOME_MAX) {
+    return { ok: false, error: 'Income is unrealistically large.' };
+  }
+
+  const needs_pct = Math.round(Number(needsRaw));
+  const wants_pct = Math.round(Number(wantsRaw));
+  const investments_pct = Math.round(Number(investmentsRaw));
+
+  if (!percentagesAreValid(needs_pct, wants_pct, investments_pct)) {
+    return {
+      ok: false,
+      error: 'Needs, Wants, and Investments percentages must each be 0–100 and add up to exactly 100.',
+    };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'You must be signed in.' };
+
+  const { error } = await supabase.from('budget_settings').upsert(
+    {
+      user_id: user.id,
+      monthly_income: Math.round(monthly_income * 100) / 100,
+      needs_pct,
+      wants_pct,
+      investments_pct,
+    },
+    { onConflict: 'user_id' },
+  );
+
+  if (error) {
+    return { ok: false, error: `Could not save settings: ${error.message}` };
   }
 
   revalidateAll();

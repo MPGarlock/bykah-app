@@ -4,6 +4,8 @@ import { useState, useTransition } from 'react';
 import { updateCategory } from '@/lib/budget-tracker/actions';
 import {
   CATEGORY_NAME_MAX,
+  BUCKETS,
+  type Bucket,
   type BudgetCategory,
 } from '@/lib/budget-tracker/types';
 
@@ -20,6 +22,7 @@ export function EditCategoryForm({
   const [errorMsg, setErrorMsg] = useState('');
   const [name, setName] = useState(category.name);
   const [budget, setBudget] = useState(String(category.monthly_budget));
+  const [bucket, setBucket] = useState<Bucket>(category.bucket);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -45,7 +48,7 @@ export function EditCategoryForm({
         Edit category
       </h2>
       <div className="grid gap-4 md:grid-cols-12">
-        <div className="md:col-span-7">
+        <div className="md:col-span-5">
           <label className="form-label">Category name</label>
           <input
             type="text"
@@ -58,7 +61,23 @@ export function EditCategoryForm({
             disabled={isPending}
           />
         </div>
-        <div className="md:col-span-5">
+        <div className="md:col-span-4">
+          <label className="form-label">Bucket</label>
+          <select
+            name="bucket"
+            value={bucket}
+            onChange={(e) => setBucket(e.target.value as Bucket)}
+            className="form-input"
+            disabled={isPending}
+          >
+            {BUCKETS.map((b) => (
+              <option key={b.value} value={b.value}>
+                {b.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="md:col-span-3">
           <label className="form-label">Monthly budget ($)</label>
           <input
             type="number"
