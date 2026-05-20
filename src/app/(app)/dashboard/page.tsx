@@ -9,6 +9,7 @@ import { AddExpenseForm } from './_components/add-expense-form';
 import { ExpenseRow } from './_components/expense-row';
 import { KidsHouseFundSummary } from './_components/kids-house-fund-summary';
 import { InvestmentTrackerSummary } from './_components/investment-tracker-summary';
+import { BudgetTrackerSummary } from './_components/budget-tracker-summary';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -41,13 +42,13 @@ export default async function DashboardPage() {
         </h1>
       </div>
 
-      {/* Three-column summary: Forever Number + Kids House Fund + Investment Tracker */}
-      <div className="grid gap-4 md:grid-cols-3 mb-10">
+      {/* 2x2 summary grid: Forever Number + Kids House Fund + Investment Tracker + Budget Tracker */}
+      <div className="grid gap-4 md:grid-cols-2 mb-10">
         <div className="rounded-2xl p-8 md:p-10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-gold/30">
           <p className="text-xs font-bold tracking-widest uppercase text-gold mb-3">
             Your Forever Number
           </p>
-          <div className="font-serif text-3xl md:text-4xl font-bold text-gold-light mb-3 tabular-nums">
+          <div className="font-serif text-4xl md:text-5xl font-bold text-gold-light mb-3 tabular-nums">
             {formatCurrency(total)}
           </div>
           <p className="text-sm text-slate-muted">
@@ -58,6 +59,7 @@ export default async function DashboardPage() {
         </div>
         <KidsHouseFundSummary />
         <InvestmentTrackerSummary />
+        <BudgetTrackerSummary />
       </div>
 
       {/* Add Expense */}
