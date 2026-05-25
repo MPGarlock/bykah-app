@@ -10,6 +10,7 @@ import { ExpenseRow } from './_components/expense-row';
 import { KidsHouseFundSummary } from './_components/kids-house-fund-summary';
 import { InvestmentTrackerSummary } from './_components/investment-tracker-summary';
 import { BudgetTrackerSummary } from './_components/budget-tracker-summary';
+import { ForeverFundSummary } from './_components/forever-fund-summary';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -25,6 +26,7 @@ export default async function DashboardPage() {
   const list: Expense[] = expenses ?? [];
   const total = totalForeverNumber(list);
   const annual = totalAnnualSpend(list);
+
   const displayName =
     (user?.user_metadata?.full_name as string | undefined) ??
     user?.email?.split('@')[0] ??
@@ -42,7 +44,7 @@ export default async function DashboardPage() {
         </h1>
       </div>
 
-      {/* 2x2 summary grid: Forever Number + Kids House Fund + Investment Tracker + Budget Tracker */}
+      {/* Summary grid */}
       <div className="grid gap-4 md:grid-cols-2 mb-10">
         <div className="rounded-2xl p-8 md:p-10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-gold/30">
           <p className="text-xs font-bold tracking-widest uppercase text-gold mb-3">
@@ -60,6 +62,7 @@ export default async function DashboardPage() {
         <KidsHouseFundSummary />
         <InvestmentTrackerSummary />
         <BudgetTrackerSummary />
+        <ForeverFundSummary />
       </div>
 
       {/* Add Expense */}
@@ -73,19 +76,15 @@ export default async function DashboardPage() {
       {/* Expense List */}
       <div>
         <div className="flex items-baseline justify-between mb-4">
-          <h2 className="font-serif text-xl font-bold text-gold-light">
-            Your expenses
-          </h2>
+          <h2 className="font-serif text-xl font-bold text-gold-light">Your expenses</h2>
           <p className="text-xs uppercase tracking-widest text-slate-subtle">
             {list.length} {list.length === 1 ? 'item' : 'items'}
           </p>
         </div>
-
         {list.length === 0 ? (
           <div className="rounded-xl p-10 text-center bg-white/[0.02] border border-white/[0.06]">
             <p className="text-slate-muted">
-              No expenses yet. Try adding one like &ldquo;Phone bill — $50/mo&rdquo;
-              to see how your Forever Number works.
+              No expenses yet. Try adding one like &ldquo;Phone bill — $50/mo&rdquo; to see how your Forever Number works.
             </p>
           </div>
         ) : (
@@ -99,8 +98,7 @@ export default async function DashboardPage() {
 
       {/* Footer note */}
       <p className="mt-12 text-xs text-slate-subtle text-center max-w-2xl mx-auto">
-        Educational tool only. Not financial advice. Withdrawal rates and
-        market returns are not guaranteed.
+        Educational tool only. Not financial advice. Withdrawal rates and market returns are not guaranteed.
       </p>
     </div>
   );
