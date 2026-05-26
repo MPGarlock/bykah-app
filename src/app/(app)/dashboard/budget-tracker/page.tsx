@@ -23,6 +23,7 @@ import { CreateCategoryForm } from './_components/create-category-form';
 import { CategoryCard } from './_components/category-card';
 import { BudgetSettingsForm } from './_components/budget-settings-form';
 import { BucketBreakdown } from './_components/bucket-breakdown';
+import SubscriptionToggles from './_components/subscription-toggles';
 
 function startOfNextMonthISO(): string {
   const d = new Date();
@@ -157,6 +158,9 @@ export default async function BudgetTrackerPage() {
       )}
 
       {/* Footer note */}
+      
+      <SubscriptionToggles />
+
       <p className="mt-12 text-xs text-slate-subtle text-center max-w-2xl mx-auto">
         Educational tool only. Not financial advice. The 50/30/20 split is a
         general guideline, not a recommendation. Budgets reset at the start of
