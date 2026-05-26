@@ -12,6 +12,7 @@ import { InvestmentTrackerSummary } from './_components/investment-tracker-summa
 import { BudgetTrackerSummary } from './_components/budget-tracker-summary';
 import { ForeverFundSummary } from './_components/forever-fund-summary';
 import { RetirementSummary } from './_components/retirement-summary';
+import { AffordSummary } from './_components/afford-summary'
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -65,6 +66,7 @@ export default async function DashboardPage() {
         <BudgetTrackerSummary />
         <ForeverFundSummary />
         <RetirementSummary />
+        <AffordSummary />
       </div>
 
       {/* Add Expense */}
