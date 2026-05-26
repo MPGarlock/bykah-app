@@ -12,7 +12,7 @@ const CATEGORIES: { id: AffordCategory; label: string }[] = [
 ];
 
 export function AffordCalculator() {
-  const [grossMonthlyIncome, setGrossMonthlyIncome] = useState<number>(0);
+  const [netMonthlyIncome, setNetMonthlyIncome] = useState<number>(0);
   const [category, setCategory] = useState<AffordCategory>('house');
 
   const [homePrice, setHomePrice] = useState<number>(300000);
@@ -30,7 +30,7 @@ export function AffordCalculator() {
 
   const [monthlyHobbyCost, setMonthlyHobbyCost] = useState<number>(200);
 
-  const hasIncome = grossMonthlyIncome > 0;
+  const hasIncome = netMonthlyIncome > 0;
 
   const categoryInputsFilled = useMemo(() => {
     switch (category) {
@@ -43,7 +43,7 @@ export function AffordCalculator() {
   }, [category, homePrice, vehiclePrice, totalVacationCost, monthlyHobbyCost]);
 
   const input: AffordInput = useMemo(() => ({
-    grossMonthlyIncome,
+    netMonthlyIncome,
     category,
     homePrice,
     downPaymentPct,
@@ -56,7 +56,7 @@ export function AffordCalculator() {
     totalVacationCost,
     monthsSaving,
     monthlyHobbyCost,
-  }), [grossMonthlyIncome, category, homePrice, downPaymentPct, interestRate, loanTermYears,
+  }), [netMonthlyIncome, category, homePrice, downPaymentPct, interestRate, loanTermYears,
       vehiclePrice, carDownPayment, carInterestRate, carLoanTermMonths, totalVacationCost,
       monthsSaving, monthlyHobbyCost]);
 
@@ -71,15 +71,15 @@ export function AffordCalculator() {
     <div className="space-y-6">
       <div className="bg-[#111f38] rounded-2xl p-6 border border-white/10">
         <label className="block font-sans text-slate-subtle text-sm mb-2 uppercase tracking-wider">
-          Monthly Gross Income (before tax)
+          Monthly Net Income (after tax)
         </label>
         <div className="flex items-center gap-2">
           <span className="text-gold font-serif text-2xl">$</span>
           <input
             type="number"
             min="0"
-            value={grossMonthlyIncome || ''}
-            onChange={(e) => setGrossMonthlyIncome(Number(e.target.value))}
+            value={netMonthlyIncome || ''}
+            onChange={(e) => setNetMonthlyIncome(Number(e.target.value))}
             placeholder="e.g. 8000"
             className="bg-transparent border-b border-white/20 focus:border-gold outline-none text-white font-sans text-2xl w-full py-1"
           />
@@ -194,7 +194,7 @@ export function AffordCalculator() {
               />
             </div>
             <p className="font-sans text-xs text-slate-subtle">
-              {result.incomePercent.toFixed(1) + '% of gross monthly income'}
+              {result.incomePercent.toFixed(1) + '% of net monthly income'}
             </p>
           </div>
 
@@ -223,7 +223,7 @@ export function AffordCalculator() {
 
       {!hasIncome && (
         <p className="font-sans text-slate-subtle text-sm text-center">
-          Enter your monthly gross income above to see your results.
+          Enter your monthly net income above to see your results.
         </p>
       )}
     </div>
