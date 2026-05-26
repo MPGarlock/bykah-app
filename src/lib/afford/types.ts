@@ -1,7 +1,7 @@
 export type AffordCategory = 'house' | 'car' | 'vacation' | 'hobby';
 
 export interface AffordInput {
-  grossMonthlyIncome: number;
+  netMonthlyIncome: number;
   category: AffordCategory;
   // House
   homePrice?: number;
