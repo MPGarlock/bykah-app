@@ -20,7 +20,7 @@ export function formatCurrency(value: number): string {
 }
 
 export function calculateAffordability(input: AffordInput): AffordResult {
-  const { grossMonthlyIncome, category } = input;
+  const { netMonthlyIncome, category } = input;
   let monthlyPayment = 0;
   let budgetCeiling = 0;
   let insights: string[] = [];
@@ -33,7 +33,7 @@ export function calculateAffordability(input: AffordInput): AffordResult {
       const termYears = input.loanTermYears ?? 30;
       const principal = price * (1 - downPct / 100);
       monthlyPayment = calculateMortgagePayment(principal, rate, termYears * 12);
-      budgetCeiling = grossMonthlyIncome * 0.25;
+      budgetCeiling = netMonthlyIncome * 0.25;
       const downAmount = price * (downPct / 100);
       insights = [
         'BYKAH uses a 25% housing ceiling (not the outdated 28% rule) because health insurance now consumes ~10% of income.',
@@ -49,9 +49,9 @@ export function calculateAffordability(input: AffordInput): AffordResult {
       const termMonths = input.carLoanTermMonths ?? 60;
       const principal = price - down;
       monthlyPayment = calculateMortgagePayment(principal, rate, termMonths);
-      budgetCeiling = grossMonthlyIncome * 0.10;
+      budgetCeiling = netMonthlyIncome * 0.10;
       insights = [
-        'BYKAH allocates ~10% of gross income for a car payment — keeping your Needs bucket balanced.',
+        'BYKAH allocates ~10% of net income for a car payment — keeping your Needs bucket balanced.',
         'A longer loan term lowers your payment but increases total interest paid.',
         remainingBudgetInsight(budgetCeiling, monthlyPayment, 'other transportation costs'),
       ];
@@ -61,19 +61,19 @@ export function calculateAffordability(input: AffordInput): AffordResult {
       const total = input.totalVacationCost ?? 0;
       const months = input.monthsSaving ?? 12;
       monthlyPayment = months > 0 ? total / months : 0;
-      budgetCeiling = grossMonthlyIncome * 0.10;
+      budgetCeiling = netMonthlyIncome * 0.10;
       insights = [
         'Saving ' + formatCurrency(monthlyPayment) + '/month for ' + months + ' months reaches your ' + formatCurrency(total) + ' goal.',
-        'Vacation savings come from your Wants bucket — ideally 10% of income or less.',
+        'Vacation savings come from your Wants bucket — ideally 10% of net income or less.',
         remainingBudgetInsight(budgetCeiling, monthlyPayment, 'other discretionary spending'),
       ];
       break;
     }
     case 'hobby': {
       monthlyPayment = input.monthlyHobbyCost ?? 0;
-      budgetCeiling = grossMonthlyIncome * 0.10;
+      budgetCeiling = netMonthlyIncome * 0.10;
       insights = [
-        'Hobbies live in your Wants bucket. BYKAH suggests keeping all Wants under 20% of income combined.',
+        'Hobbies live in your Wants bucket. BYKAH suggests keeping all Wants under 20% of net income combined.',
         'At ' + formatCurrency(monthlyPayment) + '/month, this costs ' + formatCurrency(monthlyPayment * 12) + ' per year.',
         remainingBudgetInsight(budgetCeiling, monthlyPayment, 'other hobbies and fun'),
       ];
@@ -81,13 +81,13 @@ export function calculateAffordability(input: AffordInput): AffordResult {
     }
   }
 
-  const incomePercent = grossMonthlyIncome > 0 ? (monthlyPayment / grossMonthlyIncome) * 100 : 0;
+  const incomePercent = netMonthlyIncome > 0 ? (monthlyPayment / netMonthlyIncome) * 100 : 0;
   const remainingBudget = budgetCeiling - monthlyPayment;
   const canAfford = monthlyPayment <= budgetCeiling;
   const foreverNumber = (monthlyPayment * 12) / 0.04;
 
   let verdict: string;
-  if (canAfford && incomePercent < (budgetCeiling / grossMonthlyIncome) * 100 * 0.8) {
+  if (canAfford && incomePercent < (budgetCeiling / netMonthlyIncome) * 100 * 0.8) {
     verdict = 'You can afford this';
   } else if (canAfford) {
     verdict = 'Tight but doable';
