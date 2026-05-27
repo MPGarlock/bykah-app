@@ -24,6 +24,7 @@ import { CategoryCard } from './_components/category-card';
 import { BudgetSettingsForm } from './_components/budget-settings-form';
 import { BucketBreakdown } from './_components/bucket-breakdown';
 import SubscriptionToggles from './_components/subscription-toggles';
+import { AuditCTA } from '@/components/AuditCTA';
 
 function startOfNextMonthISO(): string {
   const d = new Date();
@@ -44,26 +45,24 @@ function startOfMonthISO(): string {
 
 export default async function BudgetTrackerPage() {
   const supabase = await createClient();
-
   const monthStart = startOfMonthISO();
   const monthEnd = startOfNextMonthISO();
 
-  const [{ data: categories }, { data: transactions }, { data: settingsRow }] =
-    await Promise.all([
-      supabase
-        .from('budget_categories')
-        .select('*')
-        .order('sort_order', { ascending: true })
-        .order('created_at', { ascending: true }),
-      supabase
-        .from('budget_transactions')
-        .select('*')
-        .gte('transacted_at', monthStart)
-        .lt('transacted_at', monthEnd)
-        .order('transacted_at', { ascending: false })
-        .order('created_at', { ascending: false }),
-      supabase.from('budget_settings').select('*').maybeSingle(),
-    ]);
+  const [{ data: categories }, { data: transactions }, { data: settingsRow }] = await Promise.all([
+    supabase
+      .from('budget_categories')
+      .select('*')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('budget_transactions')
+      .select('*')
+      .gte('transacted_at', monthStart)
+      .lt('transacted_at', monthEnd)
+      .order('transacted_at', { ascending: false })
+      .order('created_at', { ascending: false }),
+    supabase.from('budget_settings').select('*').maybeSingle(),
+  ]);
 
   const categoryList: BudgetCategory[] = categories ?? [];
   const transactionList: BudgetTransaction[] = transactions ?? [];
@@ -102,16 +101,12 @@ export default async function BudgetTrackerPage() {
           Budget Tracker
         </h1>
         <p className="mt-2 text-sm md:text-base text-slate-muted max-w-2xl">
-          {currentMonthLabel()} spending vs. your monthly budgets, organized by
-          the 50/30/20 guideline. Log transactions as they happen.
+          {currentMonthLabel()} spending vs. your monthly budgets, organized by the 50/30/20 guideline. Log transactions as they happen.
         </p>
       </div>
 
       {/* 50/30/20 plan */}
-      <BucketBreakdown
-        summaries={summaries}
-        income={planSettings.monthly_income}
-      />
+      <BucketBreakdown summaries={summaries} income={planSettings.monthly_income} />
 
       {/* Income & targets settings */}
       <div className="mb-10">
@@ -147,7 +142,6 @@ export default async function BudgetTrackerPage() {
               </div>
             );
           })}
-
           <div className="pt-6 border-t border-white/[0.08]">
             <h2 className="font-serif text-lg font-bold text-gold-light mb-4">
               Add another category
@@ -157,14 +151,13 @@ export default async function BudgetTrackerPage() {
         </div>
       )}
 
-      {/* Footer note */}
-      
-      <SubscriptionToggles />
+      {/* Audit CTA */}
+      <AuditCTA />
 
+      {/* Footer note */}
+      <SubscriptionToggles />
       <p className="mt-12 text-xs text-slate-subtle text-center max-w-2xl mx-auto">
-        Educational tool only. Not financial advice. The 50/30/20 split is a
-        general guideline, not a recommendation. Budgets reset at the start of
-        each calendar month.
+        Educational tool only. Not financial advice. The 50/30/20 split is a general guideline, not a recommendation. Budgets reset at the start of each calendar month.
       </p>
     </div>
   );
