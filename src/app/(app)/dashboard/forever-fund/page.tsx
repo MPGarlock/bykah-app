@@ -2,10 +2,10 @@ import { createClient } from '@/lib/supabase/server';
 import type { Expense } from '@/lib/forever-fund/types';
 import { totalForeverNumber, formatCurrency } from '@/lib/forever-fund/math';
 import { ProjectionClient } from './_components/projection-client';
+import { AuditCTA } from '@/components/AuditCTA';
 
 export default async function ForeverFundPage() {
   const supabase = await createClient();
-
   const [{ data: expenses }, { data: accounts }] = await Promise.all([
     supabase.from('expenses').select('*').order('created_at', { ascending: false }),
     supabase.from('investment_accounts').select('current_balance'),
@@ -30,8 +30,7 @@ export default async function ForeverFundPage() {
           Forever Fund
         </h1>
         <p className="mt-2 text-sm md:text-base text-slate-muted max-w-2xl">
-          Project your portfolio growth year by year. See exactly when each expense gets
-          covered — and when you reach full financial independence.
+          Project your portfolio growth year by year. See exactly when each expense gets covered — and when you reach full financial independence.
         </p>
       </div>
 
@@ -74,7 +73,6 @@ export default async function ForeverFundPage() {
           </div>
         )}
       </div>
-
       {expenseList.length === 0 ? (
         <div className="rounded-xl p-10 text-center bg-white/[0.02] border border-white/[0.06]">
           <p className="text-slate-muted">
@@ -93,9 +91,12 @@ export default async function ForeverFundPage() {
         />
       )}
 
+      {/* Audit CTA */}
+      <AuditCTA />
+
+      {/* Footer note */}
       <p className="mt-12 text-xs text-slate-subtle text-center max-w-2xl mx-auto">
-        Educational tool only. Not financial advice. Projections assume steady annual returns
-        and consistent contributions — actual returns vary and are not guaranteed.
+        Educational tool only. Not financial advice. Projections assume steady annual returns and consistent contributions — actual returns vary and are not guaranteed.
       </p>
     </div>
   );
