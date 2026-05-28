@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import UpgradePrompt from '@/components/UpgradePrompt';
 import type { InvestmentAccount } from '@/lib/investment-tracker/types';
 import type { Expense } from '@/lib/forever-fund/types';
 import { totalInvested, progressTowardGoal } from '@/lib/investment-tracker/math';
@@ -8,6 +9,12 @@ import { AccountRow } from './_components/account-row';
 
 export default async function InvestmentTrackerPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user?.id ?? '').single();
+  const isPlusUser = profile?.plan === 'plus';
+
+  if (!isPlusUser) return <UpgradePrompt featureName="Investment Tracker" />;
+
 
   // Fetch investment accounts AND expenses (to compute Forever Number target)
   const [{ data: accounts }, { data: expenses }] = await Promise.all([
