@@ -13,18 +13,14 @@ import {
   DEFAULT_WANTS_PCT,
   DEFAULT_INVESTMENTS_PCT,
 } from '@/lib/budget-tracker/types';
-import {
-  buildCategoryStats,
-  buildBucketSummaries,
-  currentMonthLabel,
-  startOfCurrentMonth,
-} from '@/lib/budget-tracker/math';
+import { buildCategoryStats, buildBucketSummaries, currentMonthLabel, startOfCurrentMonth, } from '@/lib/budget-tracker/math';
 import { CreateCategoryForm } from './_components/create-category-form';
 import { CategoryCard } from './_components/category-card';
 import { BudgetSettingsForm } from './_components/budget-settings-form';
 import { BucketBreakdown } from './_components/bucket-breakdown';
 import SubscriptionToggles from './_components/subscription-toggles';
 import { AuditCTA } from '@/components/AuditCTA';
+import { UpgradePrompt } from '@/components/UpgradePrompt';
 
 function startOfNextMonthISO(): string {
   const d = new Date();
@@ -45,6 +41,10 @@ function startOfMonthISO(): string {
 
 export default async function BudgetTrackerPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user?.id ?? '').single();
+  const isPlusUser = profile?.plan === 'plus';
+
   const monthStart = startOfMonthISO();
   const monthEnd = startOfNextMonthISO();
 
@@ -88,6 +88,7 @@ export default async function BudgetTrackerPage() {
   };
 
   const summaries = buildBucketSummaries(categoriesWithStats, planSettings);
+
   const hasCategories = categoriesWithStats.length > 0;
 
   return (
@@ -154,8 +155,9 @@ export default async function BudgetTrackerPage() {
       {/* Audit CTA */}
       <AuditCTA />
 
-      {/* Footer note */}
-      <SubscriptionToggles />
+      {/* Subscription Toggles */}
+      {isPlusUser ? <SubscriptionToggles /> : <UpgradePrompt featureName="Subscription Tracker" />}
+
       <p className="mt-12 text-xs text-slate-subtle text-center max-w-2xl mx-auto">
         Educational tool only. Not financial advice. The 50/30/20 split is a general guideline, not a recommendation. Budgets reset at the start of each calendar month.
       </p>
