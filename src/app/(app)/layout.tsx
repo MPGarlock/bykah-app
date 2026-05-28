@@ -16,6 +16,8 @@ export default async function AppLayout({
     redirect('/login');
   }
 
+  const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single();
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-white/5 px-6 py-4">
@@ -28,11 +30,19 @@ export default async function AppLayout({
               A House
             </span>
           </Link>
-
           <div className="flex items-center gap-4">
             <span className="text-sm text-slate-muted hidden sm:block">
               {user.email}
             </span>
+            {profile?.plan !== 'plus' && (
+              <Link
+                href="/dashboard/upgrade"
+                style={{ color: '#C9973A' }}
+                className="text-sm font-semibold"
+              >
+                Upgrade to Plus
+              </Link>
+            )}
             <form action="/auth/signout" method="post">
               <button
                 type="submit"
@@ -44,12 +54,9 @@ export default async function AppLayout({
           </div>
         </div>
       </header>
-
       <main className="flex-1">{children}</main>
-
       <footer className="border-t border-white/5 px-6 py-4 text-xs text-slate-subtle text-center">
-        © {new Date().getFullYear()} Buy Your Kids A House · For educational purposes only.
-        Not financial advice.
+        © {new Date().getFullYear()} Buy Your Kids A House · For educational purposes only. Not financial advice.
       </footer>
     </div>
   );
