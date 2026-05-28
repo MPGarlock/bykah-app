@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import UpgradePrompt from '@/components/UpgradePrompt';
 import type { Expense } from '@/lib/forever-fund/types';
 import { totalForeverNumber, formatCurrency } from '@/lib/forever-fund/math';
 import { ProjectionClient } from './_components/projection-client';
@@ -6,6 +7,9 @@ import { AuditCTA } from '@/components/AuditCTA';
 
 export default async function ForeverFundPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user?.id ?? '').single();
+  const isPlusUser = profile?.plan === 'plus';
   const [{ data: expenses }, { data: accounts }] = await Promise.all([
     supabase.from('expenses').select('*').order('created_at', { ascending: false }),
     supabase.from('investment_accounts').select('current_balance'),
@@ -84,11 +88,15 @@ export default async function ForeverFundPage() {
           </p>
         </div>
       ) : (
-        <ProjectionClient
-          expenses={expenseList}
-          currentPortfolio={invested}
-          foreverNumber={foreverNumber}
-        />
+        isPlusUser ? (
+          <ProjectionClient
+            expenses={expenseList}
+            currentPortfolio={invested}
+            foreverNumber={foreverNumber}
+          />
+        ) : (
+          <UpgradePrompt featureName='Forever Fund Projection' />
+        )
       )}
 
       {/* Audit CTA */}
