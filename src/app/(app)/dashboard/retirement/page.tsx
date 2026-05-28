@@ -1,10 +1,17 @@
 import { createClient } from '@/lib/supabase/server';
+import UpgradePrompt from '@/components/UpgradePrompt';
 import type { RetirementGoal } from '@/lib/retirement/types';
 import { calculateRetirementProjection, formatCurrency } from '@/lib/retirement/math';
 import { RetirementClient } from './_components/retirement-client';
 
 export default async function RetirementPage() {
   let goal: RetirementGoal | null = null;
+
+  const supabaseAuth = await createClient();
+  const { data: { user } } = await supabaseAuth.auth.getUser();
+  const { data: profile } = await supabaseAuth.from('profiles').select('plan').eq('id', user?.id ?? '').single();
+  const isPlusUser = profile?.plan === 'plus';
+  if (!isPlusUser) return <UpgradePrompt featureName="Retirement Goal" />;
 
   try {
     const supabase = await createClient();
