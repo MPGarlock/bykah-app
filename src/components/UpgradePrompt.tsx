@@ -16,7 +16,7 @@ export default function UpgradePrompt({ featureName = 'This feature' }: UpgradeP
       margin: '4rem auto',
       fontFamily: 'DM Sans, sans-serif',
     }}>
-      <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>&#128274;</div>
+      <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{'\uD83D\uDD12'}</div>
       <h3 style={{
         color: '#C9973A',
         fontFamily: 'Cormorant Garamond, serif',
@@ -41,7 +41,7 @@ export default function UpgradePrompt({ featureName = 'This feature' }: UpgradeP
           fontSize: '1rem',
         }}
       >
-        Upgrade to Plus ->
+        Upgrade to Plus →
       </Link>
     </div>
   );
