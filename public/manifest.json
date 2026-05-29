@@ -1,0 +1,18 @@
+{
+  "name": "BYKAH - Buy Your Kids A House",
+  "short_name": "BYKAH",
+  "description": "Track your Forever Fund, budget smarter, and build generational wealth.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0A1628",
+  "theme_color": "#0A1628",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
