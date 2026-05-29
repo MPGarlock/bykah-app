@@ -11,11 +11,11 @@ export async function POST(req: NextRequest) {
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Webhook signature failed' }, { status: 400 });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
@@ -43,5 +43,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ received: true });
 }
-
-export const config = { api: { bodyParser: false } };
