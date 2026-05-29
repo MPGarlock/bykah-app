@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import InstallBanner from '@/components/InstallBanner';
 
 export const viewport: Viewport = {
   themeColor: '#0A1628',
@@ -26,7 +27,10 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icons/icon.svg" />
       </head>
-      <body>{children}</body>
+      <body>
+        <InstallBanner />
+        {children}
+      </body>
     </html>
   );
 }
