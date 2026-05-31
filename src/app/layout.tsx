@@ -7,8 +7,30 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Buy Your Kids A House — App',
-  description: 'Track your Forever Number. Build generational wealth, one expense at a time.',
+  title: {
+    default: 'BYKAH App | Buy Your Kids A House',
+    template: '%s | BYKAH',
+  },
+  description: 'Track your Forever Fund, budget with 50/30/20, run house and car calculators, and build generational wealth. Free tools from the Buy Your Kids A House podcast.',
+  keywords: ['generational wealth', 'forever fund', '50/30/20 budget', 'buy your kids a house', 'financial planning'],
+  authors: [{ name: 'Matt Garlock' }, { name: 'Andrew Higgins' }],
+  metadataBase: new URL('https://app.buyyourkidsahouse.com'),
+  openGraph: {
+    type: 'website',
+    url: 'https://app.buyyourkidsahouse.com',
+    title: 'BYKAH App | Buy Your Kids A House',
+    description: 'Track your Forever Fund, budget with 50/30/20, and build generational wealth.',
+    siteName: 'BYKAH App',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'BYKAH App | Buy Your Kids A House',
+    description: 'Track your Forever Fund, budget with 50/30/20, and build generational wealth.',
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
