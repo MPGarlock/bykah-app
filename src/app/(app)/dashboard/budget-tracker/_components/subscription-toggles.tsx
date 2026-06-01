@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { SUBSCRIPTION_PRESETS, SubscriptionPreset } from '@/lib/subscriptions/presets';
 
 function foreverNumber(monthly: number): number {
@@ -30,22 +31,64 @@ export default function SubscriptionToggles() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [added, setAdded] = useState(false);
 
-  function toggleItem(id: string) {
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
+  // Load persisted subscriptions on mount
+  useEffect(() => {
+    const load = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('user_subscriptions')
+        .select('subscription_name, is_active')
+        .eq('user_id', user.id);
+
+      if (data && data.length > 0) {
+        const activeIds = new Set<string>(
+          data.filter((row) => row.is_active).map((row) => row.subscription_name)
+        );
+        setSelected(activeIds);
       }
-      return next;
-    });
+    };
+
+    load();
+  }, []);
+
+  async function toggleItem(id: string) {
+    // Optimistic update
+    const newSelected = new Set(selected);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelected(newSelected);
     setAdded(false);
+
+    // Persist to Supabase
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const isActive = newSelected.has(id);
+    await supabase.from('user_subscriptions').upsert(
+      {
+        user_id: user.id,
+        subscription_name: id,
+        is_active: isActive,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,subscription_name' }
+    );
   }
 
   const selectedPresets = useMemo(
-    () => SUBSCRIPTION_PRESETS.filter(p => selected.has(p.id)),
-    [selected],
+    () => SUBSCRIPTION_PRESETS.filter((p) => selected.has(p.id)),
+    [selected]
   );
 
   const totalMonthly = selectedPresets.reduce((sum, p) => sum + p.monthlyAmount, 0);
@@ -54,7 +97,7 @@ export default function SubscriptionToggles() {
   const presetsByCategory = useMemo(() => {
     const map: Record<string, SubscriptionPreset[]> = {};
     for (const cat of CATEGORIES) {
-      map[cat] = SUBSCRIPTION_PRESETS.filter(p => p.category === cat);
+      map[cat] = SUBSCRIPTION_PRESETS.filter((p) => p.category === cat);
     }
     return map;
   }, []);
@@ -68,7 +111,7 @@ export default function SubscriptionToggles() {
         </p>
       </div>
 
-      {CATEGORIES.map(cat => (
+      {CATEGORIES.map((cat) => (
         <div key={cat} className="mb-6">
           <h3
             className={
@@ -79,7 +122,7 @@ export default function SubscriptionToggles() {
             {cat}
           </h3>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-            {presetsByCategory[cat].map(preset => {
+            {presetsByCategory[cat].map((preset) => {
               const on = selected.has(preset.id);
               return (
                 <button
@@ -95,18 +138,12 @@ export default function SubscriptionToggles() {
                   <span className="mb-1 text-xl">{preset.icon}</span>
                   <span
                     className={
-                      'text-xs font-medium leading-tight ' +
-                      (on ? 'text-white' : 'text-slate-subtle')
+                      'text-xs font-medium leading-tight ' + (on ? 'text-white' : 'text-slate-subtle')
                     }
                   >
                     {preset.name}
                   </span>
-                  <span
-                    className={
-                      'mt-1 text-xs ' +
-                      (on ? 'text-gold-light' : 'text-slate-muted')
-                    }
-                  >
+                  <span className={'mt-1 text-xs ' + (on ? 'text-gold-light' : 'text-slate-muted')}>
                     {'$' + preset.monthlyAmount + '/mo'}
                   </span>
                 </button>
@@ -125,19 +162,13 @@ export default function SubscriptionToggles() {
                   {selected.size} subscription{selected.size !== 1 ? 's' : ''}
                 </span>
                 {' selected · '}
-                <span className="font-semibold text-gold">
-                  {formatCurrency(totalMonthly)}/mo
-                </span>
+                <span className="font-semibold text-gold">{formatCurrency(totalMonthly)}/mo</span>
                 {' · '}
-                <span className="text-slate-subtle">
-                  {formatCurrency(totalMonthly * 12)}/yr
-                </span>
+                <span className="text-slate-subtle">{formatCurrency(totalMonthly * 12)}/yr</span>
               </p>
               <p className="text-xs text-slate-muted">
                 {'Forever Number impact: '}
-                <span className="font-semibold text-gold">
-                  {formatCurrency(totalForever)}
-                </span>
+                <span className="font-semibold text-gold">{formatCurrency(totalForever)}</span>
                 {' needed to cover these forever'}
               </p>
             </div>
