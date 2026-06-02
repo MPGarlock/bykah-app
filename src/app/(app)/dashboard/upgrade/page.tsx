@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-const PLUS_MONTHLY_PRICE_ID = 'price_1TcCsU0y3NTRtq23PhFw8pe2';
-const PLUS_ANNUAL_PRICE_ID = 'price_1TcCsU0y3NTRtq23r7Fj1Utz';
+const PLUS_MONTHLY_PRICE_ID = 'price_1TdgDL0y3NTRtq23w61HG92f';
+const PLUS_ANNUAL_PRICE_ID = 'price_1TdgDL0y3NTRtq23XQTGvLu8';
 
 export default function UpgradePage() {
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
