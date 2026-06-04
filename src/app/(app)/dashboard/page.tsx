@@ -13,6 +13,7 @@ import { BudgetTrackerSummary } from './_components/budget-tracker-summary';
 import { ForeverFundSummary } from './_components/forever-fund-summary';
 import { RetirementSummary } from './_components/retirement-summary';
 import { AffordSummary } from './_components/afford-summary';
+import { TravelPointsSummary } from './_components/travel-points-summary';
 import { AuditCTA } from '@/components/AuditCTA';
 
 export default async function DashboardPage() {
@@ -59,7 +60,7 @@ export default async function DashboardPage() {
           <p className="text-sm text-slate-muted">
             {list.length === 0
               ? 'Add your first recurring expense to start building your Forever Number.'
-              : `What you'd need invested to cover ${formatCurrency(annual)}/yr forever.`}
+              : 'What you' + "'" + 'd need invested to cover ' + formatCurrency(annual) + '/yr forever.'}
           </p>
         </div>
         <KidsHouseFundSummary />
@@ -68,6 +69,7 @@ export default async function DashboardPage() {
         <ForeverFundSummary />
         <RetirementSummary />
         <AffordSummary />
+        <TravelPointsSummary />
       </div>
 
       {/* Add Expense */}
