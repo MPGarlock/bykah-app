@@ -23,10 +23,10 @@ export function UpgradePrompt({ featureName = 'This feature' }: UpgradePromptPro
         fontSize: '1.5rem',
         marginBottom: '0.5rem',
       }}>
-        {featureName} is available on BYKAH Plus
+        {featureName} is available on BYKAH Pro
       </h3>
       <p style={{ color: '#CBD5E8', marginBottom: '1.5rem', lineHeight: '1.6' }}>
-        Upgrade to Plus to unlock this feature and everything else BYKAH has to offer.
+        Upgrade to Pro to unlock this feature and everything else BYKAH has to offer.
       </p>
       <Link href="/dashboard/upgrade" style={{
         display: 'inline-block',
@@ -39,7 +39,7 @@ export function UpgradePrompt({ featureName = 'This feature' }: UpgradePromptPro
         fontSize: '1rem',
       }}
       >
-        Upgrade to Plus →
+        Upgrade to Pro →
       </Link>
     </div>
   );
