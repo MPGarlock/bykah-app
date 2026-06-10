@@ -6,7 +6,7 @@ export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode;
-})  {
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -34,15 +34,13 @@ export default async function AppLayout({
             <span className="text-sm text-slate-muted hidden sm:block">
               {user.email}
             </span>
-            {profile?.plan !== 'pro' && (
-              <Link
-                href="/dashboard/upgrade"
-                style={{ color: '#C9973A' }}
-                className="text-sm font-semibold"
-              >
-                Upgrade to Pro
-              </Link>
-            )}
+            <Link
+              href="/dashboard/upgrade"
+              style={{ color: '#C9973A' }}
+              className="text-sm font-semibold"
+            >
+              {profile?.plan === 'pro' ? 'Membership' : 'Upgrade to Pro'}
+            </Link>
             <form action="/auth/signout" method="post">
               <button
                 type="submit"
