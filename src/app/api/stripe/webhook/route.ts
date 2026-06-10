@@ -9,8 +9,12 @@ const PRO_PRICE_IDS = [
   process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
 ].filter(Boolean) as string[];
 
-function getPlanFromPriceId(priceId: string): 'plus' | 'pro' {
-  return PRO_PRICE_IDS.includes(priceId) ? 'pro' : 'plus';
+// TODO: Once the Plaid integration ships and "Ultimate" ($15/mo or $144/yr)
+// becomes purchasable, add STRIPE_ULTIMATE_MONTHLY_PRICE_ID /
+// STRIPE_ULTIMATE_ANNUAL_PRICE_ID env vars, collect them into an
+// ULTIMATE_PRICE_IDS array, and map them to 'ultimate' below.
+function getPlanFromPriceId(priceId: string): 'free' | 'pro' | 'ultimate' {
+  return PRO_PRICE_IDS.includes(priceId) ? 'pro' : 'free';
 }
 
 export async function POST(req: NextRequest) {
