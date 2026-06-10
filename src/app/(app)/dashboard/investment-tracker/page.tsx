@@ -11,7 +11,7 @@ export default async function InvestmentTrackerPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user?.id ?? '').single();
-  const isPlusUser = profile?.plan === 'plus';
+  const isPlusUser = profile?.plan === 'pro';
 
   if (!isPlusUser) return <UpgradePrompt featureName="Investment Tracker" />;
 
