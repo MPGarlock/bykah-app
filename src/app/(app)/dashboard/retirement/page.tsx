@@ -10,7 +10,7 @@ export default async function RetirementPage() {
   const supabaseAuth = await createClient();
   const { data: { user } } = await supabaseAuth.auth.getUser();
   const { data: profile } = await supabaseAuth.from('profiles').select('plan').eq('id', user?.id ?? '').single();
-  const isPlusUser = profile?.plan === 'plus';
+  const isPlusUser = profile?.plan === 'pro';
   if (!isPlusUser) return <UpgradePrompt featureName="Retirement Goal" />;
 
   try {
