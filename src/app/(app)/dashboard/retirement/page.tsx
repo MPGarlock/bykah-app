@@ -3,6 +3,8 @@ import UpgradePrompt from '@/components/UpgradePrompt';
 import type { RetirementGoal } from '@/lib/retirement/types';
 import { calculateRetirementProjection, formatCurrency } from '@/lib/retirement/math';
 import { RetirementClient } from './_components/retirement-client';
+import { RetirementCalculator } from './_components/retirement-calculator';
+import { DEFAULT_NEEDS_PCT, DEFAULT_WANTS_PCT } from '@/lib/budget-tracker/types';
 
 export default async function RetirementPage() {
   let goal: RetirementGoal | null = null;
@@ -28,13 +30,54 @@ export default async function RetirementPage() {
     goal = null;
   }
 
+  // Best-effort defaults for the "Find Your Number" calculator, pulled from
+  // the user's existing 50/30/20 budget plan and investment accounts.
+  let defaultNeeds = 0;
+  let defaultWants = 0;
+  let defaultCurrentSavings = 0;
+
+  try {
+    const supabase = await createClient();
+    const [{ data: settingsRow }, { data: accounts }] = await Promise.all([
+      supabase.from('budget_settings').select('*').maybeSingle(),
+      supabase.from('investment_accounts').select('current_balance'),
+    ]);
+
+    const income = Number(settingsRow?.monthly_income ?? 0);
+    const needsPct = Number(settingsRow?.needs_pct ?? DEFAULT_NEEDS_PCT);
+    const wantsPct = Number(settingsRow?.wants_pct ?? DEFAULT_WANTS_PCT);
+    defaultNeeds = (income * needsPct) / 100;
+    defaultWants = (income * wantsPct) / 100;
+    defaultCurrentSavings = (accounts ?? []).reduce(
+      (sum: number, a: { current_balance: number }) => sum + Number(a.current_balance),
+      0,
+    );
+  } catch {
+    // Defaults stay at 0 — the calculator works fine with manual entry.
+  }
+
   const projection = goal ? calculateRetirementProjection(goal) : null;
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4">
-      <h1 className="font-serif text-3xl md:text-4xl font-bold text-gold-light mb-2">Retirement Goal</h1>
-      <p className="text-slate-muted mb-8">Project your path to financial independence.</p>
+    <div className="max-w-5xl mx-auto px-6 py-12">
+      <div className="mb-8">
+        <h1 className="font-serif text-3xl md:text-4xl font-bold text-gold-light mb-2">Retirement Goal</h1>
+        <p className="text-slate-muted max-w-2xl">
+          Find your retirement number with a modified 50/30/20 budget and the 4% rule, then
+          track your progress toward it.
+        </p>
+      </div>
 
+      {/* Find Your Number calculator */}
+      <div className="mb-12">
+        <RetirementCalculator
+          defaultNeeds={defaultNeeds}
+          defaultWants={defaultWants}
+          defaultCurrentSavings={defaultCurrentSavings}
+        />
+      </div>
+
+      {/* Existing goal tracking / projection */}
       {goal && projection ? (
         <>
           <div className="grid grid-cols-3 gap-4 mb-8">
