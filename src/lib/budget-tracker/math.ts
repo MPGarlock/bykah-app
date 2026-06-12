@@ -59,6 +59,7 @@ export function buildCategoryStats(
     spentThisMonth: spent,
     remainingThisMonth: Math.max(0, budget - spent),
     progressPct: progressPct(spent, budget),
+    paidThisMonth: spent > 0,
   };
 }
 
