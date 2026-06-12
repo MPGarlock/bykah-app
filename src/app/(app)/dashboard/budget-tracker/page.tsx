@@ -91,6 +91,10 @@ export default async function BudgetTrackerPage() {
 
   const hasCategories = categoriesWithStats.length > 0;
 
+  const addedSubscriptionNames = categoryList
+    .filter((c) => c.bucket === 'wants' && c.item_type === 'fixed_bill')
+    .map((c) => c.name);
+
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
       {/* Header */}
@@ -156,7 +160,7 @@ export default async function BudgetTrackerPage() {
       <AuditCTA />
 
       {/* Subscription Toggles */}
-      {isPlusUser ? <SubscriptionToggles /> : <UpgradePrompt featureName="Subscription Tracker" />}
+      {isPlusUser ? <SubscriptionToggles addedNames={addedSubscriptionNames} /> : <UpgradePrompt featureName="Subscription Tracker" />}
 
       <p className="mt-12 text-xs text-slate-subtle text-center max-w-2xl mx-auto">
         Educational tool only. Not financial advice. The 50/30/20 split is a general guideline, not a recommendation. Budgets reset at the start of each calendar month.
