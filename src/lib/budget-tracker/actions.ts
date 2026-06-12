@@ -20,7 +20,10 @@ import {
   AMOUNT_MIN,
   AMOUNT_MAX,
   INCOME_MAX,
+  DUE_DAY_MIN,
+  DUE_DAY_MAX,
   type Bucket,
+  type ItemType,
 } from './types';
 import { percentagesAreValid } from './math';
 
@@ -36,12 +39,20 @@ function revalidateAll() {
 function parseCategoryFields(formData: FormData):
   | {
       ok: true;
-      values: { name: string; monthly_budget: number; bucket: Bucket };
+      values: {
+        name: string;
+        monthly_budget: number;
+        bucket: Bucket;
+        item_type: ItemType;
+        due_day: number | null;
+      };
     }
   | { ok: false; error: string } {
   const name = String(formData.get('name') ?? '').trim();
   const budgetRaw = String(formData.get('monthly_budget') ?? '').trim();
   const bucketRaw = String(formData.get('bucket') ?? 'needs').trim();
+  const itemTypeRaw = String(formData.get('item_type') ?? 'bucket').trim();
+  const dueDayRaw = String(formData.get('due_day') ?? '').trim();
 
   if (!name) return { ok: false, error: 'Category name is required.' };
   if (name.length > CATEGORY_NAME_MAX) {
@@ -66,12 +77,33 @@ function parseCategoryFields(formData: FormData):
     ? (bucketRaw as Bucket)
     : 'needs';
 
+  const item_type: ItemType =
+    itemTypeRaw === 'fixed_bill' ? 'fixed_bill' : 'bucket';
+
+  let due_day: number | null = null;
+  if (item_type === 'fixed_bill' && dueDayRaw) {
+    const parsedDueDay = Math.round(Number(dueDayRaw));
+    if (
+      !Number.isFinite(parsedDueDay) ||
+      parsedDueDay < DUE_DAY_MIN ||
+      parsedDueDay > DUE_DAY_MAX
+    ) {
+      return {
+        ok: false,
+        error: `Due day must be between ${DUE_DAY_MIN} and ${DUE_DAY_MAX}.`,
+      };
+    }
+    due_day = parsedDueDay;
+  }
+
   return {
     ok: true,
     values: {
       name,
       monthly_budget: Math.round(monthly_budget * 100) / 100,
       bucket,
+      item_type,
+      due_day,
     },
   };
 }
@@ -347,6 +379,143 @@ export async function updateBudgetSettings(
 
   if (error) {
     return { ok: false, error: `Could not save settings: ${error.message}` };
+  }
+
+  revalidateAll();
+  return { ok: true };
+}
+
+/**
+ * Mark a fixed-bill category as paid for the current month by logging a
+ * transaction equal to its monthly budget.
+ */
+export async function markBillPaid(categoryId: string): Promise<ActionResult> {
+  if (!categoryId) return { ok: false, error: 'Category ID is required.' };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'You must be signed in.' };
+
+  const { data: category } = await supabase
+    .from('budget_categories')
+    .select('id, monthly_budget, item_type')
+    .eq('id', categoryId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (!category) return { ok: false, error: 'Category not found.' };
+  if (category.item_type !== 'fixed_bill') {
+    return { ok: false, error: 'Only fixed bills can be marked as paid.' };
+  }
+
+  const today = new Date();
+  const transacted_at = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  const { error } = await supabase.from('budget_transactions').insert({
+    category_id: categoryId,
+    user_id: user.id,
+    amount: category.monthly_budget,
+    note: 'Paid',
+    transacted_at,
+  });
+
+  if (error) {
+    return { ok: false, error: `Could not mark bill as paid: ${error.message}` };
+  }
+
+  revalidateAll();
+  return { ok: true };
+}
+
+/**
+ * Mark a fixed-bill category as unpaid for the current month by removing
+ * this month's transactions for it.
+ */
+export async function markBillUnpaid(categoryId: string): Promise<ActionResult> {
+  if (!categoryId) return { ok: false, error: 'Category ID is required.' };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'You must be signed in.' };
+
+  const now = new Date();
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const monthEnd = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-01`;
+
+  const { error } = await supabase
+    .from('budget_transactions')
+    .delete()
+    .eq('category_id', categoryId)
+    .eq('user_id', user.id)
+    .gte('transacted_at', monthStart)
+    .lt('transacted_at', monthEnd);
+
+  if (error) {
+    return { ok: false, error: `Could not mark bill as unpaid: ${error.message}` };
+  }
+
+  revalidateAll();
+  return { ok: true };
+}
+
+/**
+ * Toggle a subscription preset in/out of the user's budget as a Fixed Bill
+ * in the "wants" bucket. Adding creates a new category; removing deletes it.
+ */
+export async function setSubscriptionCategory(
+  name: string,
+  monthlyAmount: number,
+  enabled: boolean,
+): Promise<ActionResult> {
+  const trimmedName = name.trim();
+  if (!trimmedName) return { ok: false, error: 'Subscription name is required.' };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'You must be signed in.' };
+
+  const { data: existing } = await supabase
+    .from('budget_categories')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('name', trimmedName)
+    .eq('bucket', 'wants')
+    .eq('item_type', 'fixed_bill')
+    .maybeSingle();
+
+  if (enabled) {
+    if (existing) return { ok: true };
+
+    const { error } = await supabase.from('budget_categories').insert({
+      user_id: user.id,
+      name: trimmedName,
+      monthly_budget: Math.round(monthlyAmount * 100) / 100,
+      bucket: 'wants',
+      item_type: 'fixed_bill',
+    });
+
+    if (error) {
+      return { ok: false, error: `Could not add subscription: ${error.message}` };
+    }
+  } else {
+    if (!existing) return { ok: true };
+
+    const { error } = await supabase
+      .from('budget_categories')
+      .delete()
+      .eq('id', existing.id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      return { ok: false, error: `Could not remove subscription: ${error.message}` };
+    }
   }
 
   revalidateAll();
