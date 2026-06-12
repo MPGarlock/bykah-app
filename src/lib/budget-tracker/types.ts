@@ -19,12 +19,36 @@ export const BUCKET_LABEL: Record<Bucket, string> = {
   investments: 'Investments',
 };
 
+/**
+ * How a category's monthly amount is tracked:
+ *  - 'bucket': a spending pool you draw from over the month (groceries,
+ *    gas, fun money). Tracked via a running total of transactions vs.
+ *    the monthly budget.
+ *  - 'fixed_bill': a single flat recurring payment (mortgage, car
+ *    payment, insurance premium). Tracked as due/paid for the month
+ *    rather than a running spend total.
+ */
+export type ItemType = 'bucket' | 'fixed_bill';
+
+export const ITEM_TYPES: { value: ItemType; label: string; blurb: string }[] = [
+  { value: 'bucket', label: 'Bucket', blurb: 'A spending pool you draw from all month, e.g. groceries, gas, fun money.' },
+  { value: 'fixed_bill', label: 'Fixed Bill', blurb: 'A single recurring payment due each month, e.g. mortgage, car payment, insurance.' },
+];
+
+export const ITEM_TYPE_LABEL: Record<ItemType, string> = {
+  bucket: 'Bucket',
+  fixed_bill: 'Fixed Bill',
+};
+
 export interface BudgetCategory {
   id: string;
   user_id: string;
   name: string;
   monthly_budget: number;
   bucket: Bucket;
+  item_type: ItemType;
+  /** Day of the month (1-31) a fixed bill is due. Null for buckets. */
+  due_day: number | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -47,6 +71,8 @@ export interface CategoryWithStats extends BudgetCategory {
   spentThisMonth: number;
   remainingThisMonth: number;
   progressPct: number;
+  /** True if at least one transaction has been logged this month. */
+  paidThisMonth: boolean;
 }
 
 /** Per-user 50/30/20 plan settings. */
@@ -83,3 +109,5 @@ export const BUDGET_MAX = 9_999_999.99;
 export const AMOUNT_MIN = 0.01;
 export const AMOUNT_MAX = 1_000_000;
 export const INCOME_MAX = 9_999_999.99;
+export const DUE_DAY_MIN = 1;
+export const DUE_DAY_MAX = 31;
