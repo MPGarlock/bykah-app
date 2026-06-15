@@ -14,6 +14,7 @@ import { ForeverFundSummary } from './_components/forever-fund-summary';
 import { RetirementSummary } from './_components/retirement-summary';
 import { AffordSummary } from './_components/afford-summary';
 import { TravelPointsSummary } from './_components/travel-points-summary';
+import { NetWorthSummary } from './_components/net-worth-summary';
 import { AuditCTA } from '@/components/AuditCTA';
 
 export default async function DashboardPage() {
@@ -70,6 +71,7 @@ export default async function DashboardPage() {
         <RetirementSummary />
         <AffordSummary />
         <TravelPointsSummary />
+        <NetWorthSummary />
       </div>
 
       {/* Add Expense */}
