@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import Link from 'next/link';
 import type {
   Bucket,
   BudgetCategory,
@@ -108,6 +109,15 @@ export default async function BudgetTrackerPage() {
         <p className="mt-2 text-sm md:text-base text-slate-muted max-w-2xl">
           {currentMonthLabel()} spending vs. your monthly budgets, organized by the 50/30/20 guideline. Log transactions as they happen.
         </p>
+      </div>
+
+      <div className="mb-8 flex flex-wrap items-center gap-3">
+        <Link
+          href="/dashboard/budget-tracker/import"
+          className="inline-flex items-center gap-2 rounded-lg border border-gold/30 px-4 py-2 text-xs font-bold uppercase tracking-widest text-gold-light hover:bg-gold/10 transition-colors"
+        >
+          Import bank statement (CSV)
+        </Link>
       </div>
 
       {/* 50/30/20 plan */}
