@@ -2,9 +2,14 @@ import Link from 'next/link';
 
 interface UpgradePromptProps {
   featureName?: string;
+  tier?: 'pro' | 'ultimate';
 }
 
-export function UpgradePrompt({ featureName = 'This feature' }: UpgradePromptProps) {
+export function UpgradePrompt({
+  featureName = 'This feature',
+  tier = 'pro',
+}: UpgradePromptProps) {
+  const tierLabel = tier === 'ultimate' ? 'Ultimate' : 'Pro';
   return (
     <div style={{
       backgroundColor: '#0f1e38',
@@ -23,10 +28,10 @@ export function UpgradePrompt({ featureName = 'This feature' }: UpgradePromptPro
         fontSize: '1.5rem',
         marginBottom: '0.5rem',
       }}>
-        {featureName} is available on BYKAH Pro
+        {featureName} is a {tierLabel} feature
       </h3>
       <p style={{ color: '#CBD5E8', marginBottom: '1.5rem', lineHeight: '1.6' }}>
-        Upgrade to Pro to unlock this feature and everything else BYKAH has to offer.
+        Upgrade to {tierLabel} to unlock this and everything else BYKAH has to offer.
       </p>
       <Link href="/dashboard/upgrade" style={{
         display: 'inline-block',
@@ -37,9 +42,8 @@ export function UpgradePrompt({ featureName = 'This feature' }: UpgradePromptPro
         borderRadius: '0.5rem',
         textDecoration: 'none',
         fontSize: '1rem',
-      }}
-      >
-        Upgrade to Pro →
+      }}>
+        Upgrade to {tierLabel} →
       </Link>
     </div>
   );
