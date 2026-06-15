@@ -521,3 +521,84 @@ export async function setSubscriptionCategory(
   revalidateAll();
   return { ok: true };
 }
+
+/**
+ * Bulk-insert transactions parsed from a CSV import after the user has
+ * reviewed/adjusted category assignments in the UI.
+ */
+export interface ImportTransactionItem {
+  category_id: string;
+  amount: number;
+  note: string | null;
+  transacted_at: string; // YYYY-MM-DD
+}
+
+export type ImportResult =
+  | { ok: true; inserted: number }
+  | { ok: false; error: string };
+
+export async function importTransactions(
+  items: ImportTransactionItem[],
+): Promise<ImportResult> {
+  if (!Array.isArray(items) || items.length === 0) {
+    return { ok: false, error: 'No transactions to import.' };
+  }
+  if (items.length > 500) {
+    return { ok: false, error: 'Too many transactions in one import (max 500). Try splitting your file.' };
+  }
+
+  for (const item of items) {
+    if (!item.category_id) {
+      return { ok: false, error: 'Every transaction must be assigned a category.' };
+    }
+    if (!Number.isFinite(item.amount) || item.amount < AMOUNT_MIN || item.amount > AMOUNT_MAX) {
+      return { ok: false, error: 'One or more transaction amounts are invalid.' };
+    }
+    if (item.note && item.note.length > NOTE_MAX) {
+      return { ok: false, error: `Notes must be ${NOTE_MAX} characters or fewer.` };
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(item.transacted_at)) {
+      return { ok: false, error: 'One or more transaction dates are invalid.' };
+    }
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'You must be signed in.' };
+
+  // Verify every referenced category belongs to this user
+  const categoryIds = Array.from(new Set(items.map((i) => i.category_id)));
+  const { data: ownedCategories, error: catError } = await supabase
+    .from('budget_categories')
+    .select('id')
+    .eq('user_id', user.id)
+    .in('id', categoryIds);
+
+  if (catError) {
+    return { ok: false, error: `Could not verify categories: ${catError.message}` };
+  }
+
+  const ownedIds = new Set((ownedCategories ?? []).map((c) => c.id));
+  if (categoryIds.some((id) => !ownedIds.has(id))) {
+    return { ok: false, error: 'One or more categories were not found.' };
+  }
+
+  const rows = items.map((item) => ({
+    category_id: item.category_id,
+    user_id: user.id,
+    amount: Math.round(item.amount * 100) / 100,
+    note: item.note?.trim() ? item.note.trim().slice(0, NOTE_MAX) : null,
+    transacted_at: item.transacted_at,
+  }));
+
+  const { error } = await supabase.from('budget_transactions').insert(rows);
+
+  if (error) {
+    return { ok: false, error: `Could not import transactions: ${error.message}` };
+  }
+
+  revalidateAll();
+  return { ok: true, inserted: rows.length };
+}
