@@ -44,7 +44,9 @@ export default async function BudgetTrackerPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user?.id ?? '').single();
-  const isPlusUser = profile?.plan === 'pro';
+  const userPlan = profile?.plan ?? 'free';
+  const isProUser = userPlan === 'pro' || userPlan === 'ultimate';
+  const isUltimateUser = userPlan === 'ultimate';
 
   const monthStart = startOfMonthISO();
   const monthEnd = startOfNextMonthISO();
@@ -92,9 +94,7 @@ export default async function BudgetTrackerPage() {
 
   const hasCategories = categoriesWithStats.length > 0;
 
-  const addedSubscriptionNames = categoryList
-    .filter((c) => c.bucket === 'wants' && c.item_type === 'fixed_bill')
-    .map((c) => c.name);
+  void isUltimateUser;
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
@@ -109,15 +109,6 @@ export default async function BudgetTrackerPage() {
         <p className="mt-2 text-sm md:text-base text-slate-muted max-w-2xl">
           {currentMonthLabel()} spending vs. your monthly budgets, organized by the 50/30/20 guideline. Log transactions as they happen.
         </p>
-      </div>
-
-      <div className="mb-8 flex flex-wrap items-center gap-3">
-        <Link
-          href="/dashboard/budget-tracker/import"
-          className="inline-flex items-center gap-2 rounded-lg border border-gold/30 px-4 py-2 text-xs font-bold uppercase tracking-widest text-gold-light hover:bg-gold/10 transition-colors"
-        >
-          Import bank statement (CSV)
-        </Link>
       </div>
 
       {/* 50/30/20 plan */}
@@ -170,7 +161,7 @@ export default async function BudgetTrackerPage() {
       <AuditCTA />
 
       {/* Subscription Toggles */}
-      {isPlusUser ? <SubscriptionToggles addedNames={addedSubscriptionNames} /> : <UpgradePrompt featureName="Subscription Tracker" />}
+      {isProUser ? <SubscriptionToggles /> : <UpgradePrompt featureName="Subscription Tracker" />}
 
       <p className="mt-12 text-xs text-slate-subtle text-center max-w-2xl mx-auto">
         Educational tool only. Not financial advice. The 50/30/20 split is a general guideline, not a recommendation. Budgets reset at the start of each calendar month.
