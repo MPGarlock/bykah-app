@@ -9,12 +9,15 @@ const PRO_PRICE_IDS = [
   process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
 ].filter(Boolean) as string[];
 
-// TODO: Once the Plaid integration ships and "Ultimate" ($15/mo or $144/yr)
-// becomes purchasable, add STRIPE_ULTIMATE_MONTHLY_PRICE_ID /
-// STRIPE_ULTIMATE_ANNUAL_PRICE_ID env vars, collect them into an
-// ULTIMATE_PRICE_IDS array, and map them to 'ultimate' below.
+const ULTIMATE_PRICE_IDS = [
+  process.env.STRIPE_ULTIMATE_MONTHLY_PRICE_ID,
+  process.env.STRIPE_ULTIMATE_ANNUAL_PRICE_ID,
+].filter(Boolean) as string[];
+
 function getPlanFromPriceId(priceId: string): 'free' | 'pro' | 'ultimate' {
-  return PRO_PRICE_IDS.includes(priceId) ? 'pro' : 'free';
+  if (ULTIMATE_PRICE_IDS.includes(priceId)) return 'ultimate';
+  if (PRO_PRICE_IDS.includes(priceId)) return 'pro';
+  return 'free';
 }
 
 export async function POST(req: NextRequest) {
@@ -25,7 +28,6 @@ export async function POST(req: NextRequest) {
   let event: Stripe.Event;
 
   if (webhookSecret) {
-    // Verify signature when secret is configured
     if (!sig) {
       return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
     }
@@ -36,7 +38,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Webhook signature failed' }, { status: 400 });
     }
   } else {
-    // No webhook secret configured — skip signature verification with a warning
     console.warn('[webhook] STRIPE_WEBHOOK_SECRET not set — skipping signature verification. Set this in Vercel for production security.');
     try {
       event = JSON.parse(body) as Stripe.Event;
