@@ -11,10 +11,9 @@ export default async function InvestmentTrackerPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user?.id ?? '').single();
-  const isPlusUser = profile?.plan === 'pro';
+  const isProUser = profile?.plan === 'pro' || profile?.plan === 'ultimate';
 
-  if (!isPlusUser) return <UpgradePrompt featureName="Investment Tracker" />;
-
+  if (!isProUser) return <UpgradePrompt featureName="Investment Tracker" />;
 
   // Fetch investment accounts AND expenses (to compute Forever Number target)
   const [{ data: accounts }, { data: expenses }] = await Promise.all([
